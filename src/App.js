@@ -1,47 +1,63 @@
-import { useEffect, useState } from "react";
-
 import "./App.css";
 import { keysArray, keyLabels } from "./keysData";
 import Key from "./key.component";
 
-let activeOperator = null;
-let activeInput = 0;
 let decimalUsed = false;
-let input0 = "";
-let input1 = "";
+let inputArray = [];
 
 function App() {
-  const [displayValue, setDisplayValue] = useState(0);
-  // const [input0, setInput0] = useState("");
-  // const [input1, setInput1] = useState("");
+  function isANumber(input) {
+    if (parseFloat(input) || input === "0") {
+      return true;
+    } else return false;
+  }
 
-  const displayEl = document.getElementById("display");
+  function addToLastInputArrayElement(keyPressed) {
+    const newNumber = inputArray.pop() + keyPressed;
+    inputArray.push(newNumber);
+  }
+
+  //updates the display to show the last number element in inputArray
+  function updateDisplay() {
+    const displayEl = document.getElementById("display");
+    if (inputArray.length > 0) {
+      for (let i = inputArray.length - 1; i >= 0; i--) {
+        console.log(inputArray[i]);
+        console.log(isANumber(inputArray[i]));
+        if (isANumber(inputArray[i])) {
+          displayEl.innerText = inputArray[i];
+          return;
+        }
+      }
+    }
+    // sets display at 0 if there is no number in inputArray
+    displayEl.innerText = "0";
+  }
 
   function clickHandler(event) {
     const keyPressed = event.target.innerText;
+    const lastInputArrayEl = inputArray[inputArray.length - 1];
     // Handles number pressed
-    console.log("Active input:", activeInput);
-    if (keyPressed >= 0) {
-      // the second part of the logic prevents more than 1 leading zero from being entered)
-      if (activeInput === 0 && (keyPressed !== "0" || input0)) {
-        // setInput0(input0 + keyPressed);
-        input0 += keyPressed;
-        displayEl.innerText = input0;
-      } else if (activeInput === 1 && (keyPressed !== "0" || input1)) {
-        //setInput1(input1 + keyPressed);
-        input1 += keyPressed;
+    console.log(isANumber(keyPressed));
+    if (isANumber(keyPressed)) {
+      //if the last element in inputArray is a number, add the key press to the number
+      if (inputArray.length > 0 && isANumber(lastInputArrayEl)) {
+        addToLastInputArrayElement(keyPressed);
+      } else {
+        //prevents leading zeros
+        if (keyPressed > 0) {
+          inputArray.push(keyPressed);
+        }
       }
     } else {
       // Handles all key presses other than numbers
       switch (keyPressed) {
         case ".":
           if (!decimalUsed) {
-            if (activeInput === 0) {
-              //input0 ? setInput0(input0 + keyPressed) : setInput0("0.");
-              input0 ? (input0 += keyPressed) : (input0 = "0.");
+            if (isANumber(lastInputArrayEl)) {
+              addToLastInputArrayElement(keyPressed);
             } else {
-              //input1 ? setInput1(input1 + keyPressed) : setInput1("0.");
-              input1 ? (input1 += keyPressed) : (input1 = "0.");
+              inputArray.push("0.");
             }
             decimalUsed = true;
           }
@@ -51,79 +67,73 @@ function App() {
           break;
         case "=":
           calculate();
+          decimalUsed = false;
           break;
         //default handles all operators
         default:
-          //TODO: address case where operator should perform equals operation
-          if (activeOperator) {
-            calculate();
+          console.log("Default case of click handler.");
+          if (inputArray.length > 0) {
+            inputArray.push(keyPressed);
           }
-          activeOperator = keyPressed;
-          activeInput = 1;
           decimalUsed = false;
-          setDisplayValue(0);
       }
     }
-    if (input1) {
-      displayEl.innerText = input1;
-    } else {
-      displayEl.innerText = input0 ? input0 : "0";
-    }
+    updateDisplay();
+    console.log(inputArray);
   }
 
   function calculate() {
-    switch (activeOperator) {
-      case "+":
-        //setInput0(parseFloat(input0) + parseFloat(input1));
-        input0 = parseFloat(input0) + parseFloat(input1);
-        //setInput1("");
-        input1 = "";
-        break;
-      case "-":
-        //setInput0(parseFloat(input0) - parseFloat(input1));
-        input0 = parseFloat(input0) - parseFloat(input1);
-        //setInput1("");
-        input1 = "";
-        break;
-      case "X":
-        //setInput0(parseFloat(input0) * parseFloat(input1));
-        input0 = parseFloat(input0) * parseFloat(input1);
-        //setInput1("");
-        input1 = "";
-        break;
-      case "/":
-        //setInput0(parseFloat(input0) / parseFloat(input1));
-        input0 = parseFloat(input0) / parseFloat(input1);
-        //setInput1("");
-        input1 = "";
-        break;
-      default:
-        console.log("No active operator.");
+    let result;
+    let activeOperator;
+    let input0;
+    let input1;
+    let negative = false;
+    // loop through input array and perform specified actions
+    for (let i = 0; i < inputArray.length; i++) {
+      if (!input0 & isANumber(inputArray[i])) {
+        input0 = parseFloat(inputArray[i]);
+      } else if (!isANumber(inputArray[i])) {
+        if (inputArray[i] === "-" && !isANumber(inputArray[i - 1])) {
+          negative = true;
+        } else {
+          activeOperator = inputArray[i];
+          negative = false;
+        }
+      } else {
+        input1 = parseFloat(inputArray[i]);
+        switch (activeOperator) {
+          case "+":
+            result = input0 + (negative ? input1 * -1 : input1);
+            break;
+          case "-":
+            result = input0 - (negative ? input1 * -1 : input1);
+            break;
+          case "X":
+            result = input0 * (negative ? input1 * -1 : input1);
+            break;
+          case "/":
+            result = input0 / (negative ? input1 * -1 : input1);
+            break;
+          default:
+            console.log(
+              "You've reached the default case of the calculate switch statement. How odd."
+            );
+        }
+        input0 = result;
+        activeOperator = null;
+        negative = false;
+      }
     }
-    activeInput = 0;
-    activeOperator = null;
     decimalUsed = false;
+    inputArray = [result];
+    updateDisplay();
   }
 
   function reset() {
-    setDisplayValue(0);
-    //setInput0("");
-    input0 = "";
-    //setInput1("");
-    input1 = "";
-    activeOperator = null;
-    activeInput = 0;
+    inputArray = [];
+    updateDisplay();
     decimalUsed = false;
   }
-
-  //handles updating the display value based on the active input array
-  // useEffect(() => {
-  //   if (activeInput === 0 && input0) {
-  //     setDisplayValue(input0);
-  //   } else if (activeInput === 1 && input1) {
-  //     setDisplayValue(input1);
-  //   }
-  // }, [input0, input1]);
 
   return (
     <div className="App">

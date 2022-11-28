@@ -1,3 +1,12 @@
+button {
+  width: 85px;
+  height: 85px;
+  margin-right: 6px;
+  margin-bottom: 6px;
+  font-size: large;
+  font-weight: bold;
+}
+
 .App {
   text-align: center;
   font-family: "Rubik Glitch", cursive;
@@ -5,17 +14,18 @@
 
 #calculator-body {
   background-color: hotpink;
-  padding: 5px 0px;
-  width: 50%;
-  margin: 20px 25%;
+  padding-top: 5px;
+  padding-left: 6px;
+  width: 375px;
+  margin: 20px auto;
 }
 
 #display {
-  width: 90%;
-  margin: 10px 5%;
+  width: 338px;
+  margin: 10px 6px;
   padding: 5px 10px;
   background-color: #b2b8c2;
   color: #242526;
-  font-size: x-large;
+  font-size: xx-large;
   text-align: right;
 }
